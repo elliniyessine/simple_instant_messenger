@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant messenger</title>
+    <style>
+        #messages {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #messages li {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #messages li.sent {
+            background-color: #b3d9ff;
+            align-self: flex-end;
+        }
+
+        #messages li.received {
+            background-color: #e6f2ff;
+            align-self: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <h1>Instant messenger</h1>
+
+    <div>
+        <label for="nameInput">Your Name:</label>
+        <input type="text" id="nameInput" placeholder="Enter your name...">
+    </div>
+
+    <div id="usersCount"></div>
+
+    <ul id="messages"></ul>
+
+    <input type="text" id="messageInput" placeholder="Type your message...">
+    <button onclick="sendMessage()">Send</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+        let senderName = ''; // Variable to store sender's name
+
+        // Update users count
+        socket.on('users', (usersCount) => {
+            document.getElementById('usersCount').innerText = `Users online: ${usersCount}`;
+        });
+
+        // Receive chat messages
+        socket.on('chat', (data) => {
+            const { message, sender } = data;
+            const messagesList = document.getElementById('messages');
+            const li = document.createElement('li');
+            li.innerText = `${sender}: ${message}`;
+            li.classList.add('received');
+            messagesList.appendChild(li);
+        });
+
+        // Send chat message
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            const nameInput = document.getElementById('nameInput');
+            senderName = nameInput.value.trim(); // Get sender's name from input
+
+            if (message !== '' && senderName !== '') {
+                const messagesList = document.getElementById('messages');
+                const li = document.createElement('li');
+                li.innerText = `${senderName}: ${message}`; // Include sender's name
+                li.classList.add('sent');
+                messagesList.appendChild(li);
+
+                socket.emit('chat', { message, sender: senderName }); // Emit sender's name
+                messageInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
+
